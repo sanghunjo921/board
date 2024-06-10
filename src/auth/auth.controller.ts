@@ -14,6 +14,7 @@ import { SigninReqDto, SignupReqDto } from './dto/req.dto';
 import { SigninResDto, SignupResDto } from './dto/res.dto';
 import { Request, Response } from 'express';
 import { Role } from 'src/user/type/user.enum';
+import { AuthUser, AuthUserType } from './decorator/auth-user.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -39,5 +40,15 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<SigninResDto> {
     return this.authService.signIn(email, password, res);
+  }
+
+  @Get('refresh')
+  async refresh(
+    @Headers('authorization') authorization,
+    @AuthUser() user: AuthUserType,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const token = /Bearer\s(.+)/.exec(authorization)?.[1];
+    return this.authService.refreshToken(user.id, token, res);
   }
 }

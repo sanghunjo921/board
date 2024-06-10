@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserReqDto } from './dto/req.dto';
@@ -50,5 +50,14 @@ export class UserService {
     } catch (error) {
       throw new Error('Error occured while creating a user');
     }
+  }
+
+  async checkAdminRole(id: number): Promise<boolean> {
+    const user = await this.userRepository.findOneBy({ id });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+    return user.role === Role.ADMIN;
   }
 }
