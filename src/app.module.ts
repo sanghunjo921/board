@@ -6,6 +6,7 @@ import { CommentModule } from './comment/comment.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import dbConfig from './config/mysql.config';
+import jwtConfig from './config/jwt.config';
 
 @Module({
   imports: [
@@ -13,7 +14,7 @@ import dbConfig from './config/mysql.config';
       envFilePath: ['.env'],
       isGlobal: true,
       cache: true,
-      load: [dbConfig],
+      load: [dbConfig, jwtConfig],
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
