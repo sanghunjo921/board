@@ -11,7 +11,12 @@ export class PostService {
     @InjectRepository(Post) private readonly postRepository: Repository<Post>,
   ) {}
 
-  async createPost({}: CreatePostReqDto): Promise<CreatePostResDto> {
+  async createPost({
+    subject,
+    content,
+    category,
+    imagePath,
+  }: CreatePostReqDto): Promise<CreatePostResDto> {
     return;
   }
 }

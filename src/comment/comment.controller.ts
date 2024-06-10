@@ -12,6 +12,6 @@ export class CommentController {
     @Body()
     createUserReqDto: CreateCommentReqDto,
   ): Promise<CreateCommentReqDto> {
-    return this.commentService.createPost(CreateCommentResDto);
+    return this.commentService.createPost(createUserReqDto);
   }
 }

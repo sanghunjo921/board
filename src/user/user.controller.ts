@@ -1,7 +1,7 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { CreateUserReqDto } from './dto/req.dto';
 import { CreateUserResDto } from './dto/res.dto';
-import { Role } from './type/user.enum';
+
 import { UserService } from './user.service';
 
 @Controller('user')
