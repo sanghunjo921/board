@@ -1,0 +1,42 @@
+version: '3.9'
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3002:3002'
+    volumes:
+      - ./src:/app/src
+      - ./.env:/app/.env
+    depends_on:
+      database:
+        condition: service_healthy
+        restart: true
+  database:
+    image: mysql:latest
+    environment:
+      MYSQL_USER: mysql
+      MYSQL_PASSWORD: mysql
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: board_db
+    ports:
+      - '3306:3306'
+    volumes:
+      - ./data/db:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'mysqladmin',
+          'ping',
+          '-h',
+          'localhost',
+          '-u',
+          'root',
+          '-p$MYSQL_ROOT_PASSWORD',
+        ]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
