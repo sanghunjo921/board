@@ -12,6 +12,14 @@ export class UserService {
     @InjectRepository(User) private readonly userRepository: Repository<User>,
   ) {}
 
+  async findUserByEmail(email: string): Promise<User> {
+    try {
+      return this.userRepository.findOne({ where: { email } });
+    } catch (error) {
+      throw new Error('Error occured while finding an user');
+    }
+  }
+
   async createUser({
     email,
     password,
