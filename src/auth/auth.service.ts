@@ -96,6 +96,30 @@ export class AuthService {
     };
   }
 
+  async refreshToken(userId: number, token: string, res: Response) {
+    try {
+      const refresh = await this.refreshTokenRepository.findOneBy({ token });
+
+      if (!refresh) {
+        throw new BadRequestException('Invalid refresh token');
+      }
+
+      const newRefresh = await this.createOrUpdateRefreshToken(
+        userId,
+        this.generateToken(userId, TokenType.REFRESH),
+      );
+      const access = this.generateToken(userId, TokenType.ACCESS);
+
+      return {
+        userId,
+        access,
+        refresh,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
   private generateToken(userId: number, tokenType: TokenType): string {
     const payload = {
       sub: userId,
