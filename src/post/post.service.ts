@@ -2,8 +2,9 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Comment } from 'src/comment/entity/comment.entity';
 import { S3Service } from 'src/s3/s3.service';
+import { User } from 'src/user/entity/user.entity';
 import { UserService } from 'src/user/user.service';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import {
   CreateAnnouncementDto,
   CreatePostReqDto,
@@ -83,7 +84,7 @@ export class PostService {
     try {
       const post = await this.postRepository.findOne({
         where: { id, isDeleted: 'N' },
-        relations: ['comments'],
+        relations: ['comments', 'user'],
       });
       console.log(post.comments);
 
@@ -91,6 +92,32 @@ export class PostService {
     } catch (error) {
       throw error;
     }
+  }
+
+  async filterPost(subject?: string, email?: string): Promise<Post[]> {
+    let targetPosts: Post[];
+    let targetUser: User | undefined;
+
+    if (email) {
+      targetUser = await this.userService.findUserByEmail(email);
+    }
+
+    const where: FindOptionsWhere<Post> = {};
+
+    if (subject) {
+      where.subject = subject;
+    }
+
+    if (targetUser) {
+      where.user = targetUser;
+    }
+
+    targetPosts = await this.postRepository.find({
+      where,
+      relations: ['user'],
+    });
+
+    return targetPosts;
   }
 
   async updatePost(id: number, newData: UpdatePostReqDto): Promise<Post> {

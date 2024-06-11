@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -18,6 +19,7 @@ import { Role } from 'src/user/type/user.enum';
 import {
   CreateAnnouncementDto,
   CreatePostReqDto,
+  FilteredPostReqDto,
   UpdatePostReqDto,
 } from './dto/req.dto';
 import { CreatePostResDto } from './dto/res.dto';
@@ -71,6 +73,14 @@ export class PostController {
   @Get(':id')
   findPostByid(@Param('id', ParseIntPipe) id: number): Promise<PostEntity> {
     return this.postService.findPostById(id);
+  }
+
+  @Get('filter')
+  findFilteredPosts(
+    @Query() filterData: FilteredPostReqDto,
+  ): Promise<PostEntity[]> {
+    const { subject, email } = filterData;
+    return this.postService.filterPost(subject, email);
   }
 
   @Patch(':id')
