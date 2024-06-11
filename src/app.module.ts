@@ -5,8 +5,10 @@ import { PostModule } from './post/post.module';
 import { CommentModule } from './comment/comment.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { S3Module } from './s3/s3.module';
 import dbConfig from './config/mysql.config';
 import jwtConfig from './config/jwt.config';
+import s3Config from './config/s3.config';
 
 @Module({
   imports: [
@@ -14,7 +16,7 @@ import jwtConfig from './config/jwt.config';
       envFilePath: ['.env'],
       isGlobal: true,
       cache: true,
-      load: [dbConfig, jwtConfig],
+      load: [dbConfig, jwtConfig, s3Config],
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -40,6 +42,7 @@ import jwtConfig from './config/jwt.config';
     UserModule,
     PostModule,
     CommentModule,
+    S3Module,
   ],
 })
 export class AppModule {}
