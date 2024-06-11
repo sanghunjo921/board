@@ -4,7 +4,7 @@ import { Comment } from 'src/comment/entity/comment.entity';
 import { S3Service } from 'src/s3/s3.service';
 import { User } from 'src/user/entity/user.entity';
 import { UserService } from 'src/user/user.service';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsWhere, MoreThan, Repository } from 'typeorm';
 import {
   CreateAnnouncementDto,
   CreatePostReqDto,
@@ -94,7 +94,35 @@ export class PostService {
     }
   }
 
-  async filterPost(subject?: string, email?: string): Promise<Post[]> {
+  async getPostsByDate(): Promise<Post[]> {
+    const targetPosts = await this.postRepository.find({
+      order: { createdAt: 'DESC' },
+    });
+    return targetPosts;
+  }
+
+  async getPostsByPopularity(
+    dateRange: 'all' | 'year' | 'month' | 'week',
+  ): Promise<Post[]> {
+    let where: FindOptionsWhere<Post> = {};
+
+    if (dateRange !== 'all') {
+      const startDate = this.calculateStartDate(dateRange);
+      where = {
+        ...where,
+        createdAt: MoreThan(startDate),
+      };
+    }
+
+    const targetPosts = await this.postRepository.find({
+      where,
+      order: { clickCount: 'DESC' },
+    });
+
+    return targetPosts;
+  }
+
+  async filterPosts(subject?: string, email?: string): Promise<Post[]> {
     let targetPosts: Post[];
     let targetUser: User | undefined;
 
@@ -151,5 +179,36 @@ export class PostService {
     } catch (error) {
       throw error;
     }
+  }
+
+  private calculateStartDate(dateRange: 'year' | 'month' | 'week'): Date {
+    const currentDate = new Date();
+    let startDate: Date;
+
+    switch (dateRange) {
+      case 'year':
+        startDate = new Date(
+          currentDate.getFullYear() - 1,
+          currentDate.getMonth(),
+          currentDate.getDate(),
+        );
+        break;
+      case 'month':
+        startDate = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth() - 1,
+          currentDate.getDate(),
+        );
+        break;
+      case 'week':
+        startDate = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          currentDate.getDate() - 7,
+        );
+        break;
+    }
+
+    return startDate;
   }
 }

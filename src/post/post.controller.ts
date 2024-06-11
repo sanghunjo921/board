@@ -80,7 +80,19 @@ export class PostController {
     @Query() filterData: FilteredPostReqDto,
   ): Promise<PostEntity[]> {
     const { subject, email } = filterData;
-    return this.postService.filterPost(subject, email);
+    return this.postService.filterPosts(subject, email);
+  }
+
+  @Get('date')
+  getPostsByDate(): Promise<PostEntity[]> {
+    return this.postService.getPostsByDate();
+  }
+
+  @Get('popular')
+  getPostsByPopularity(
+    @Query('dateRange') dateRange: 'all' | 'year' | 'month' | 'week',
+  ): Promise<PostEntity[]> {
+    return this.postService.getPostsByPopularity(dateRange);
   }
 
   @Patch(':id')
