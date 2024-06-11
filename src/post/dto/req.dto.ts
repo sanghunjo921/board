@@ -51,3 +51,13 @@ export class UpdatePostReqDto {
   @IsOptional()
   imagePath?: string;
 }
+
+export class FilteredPostReqDto {
+  @IsString()
+  @IsOptional()
+  subject?: string;
+
+  @IsString()
+  @IsOptional()
+  email?: string;
+}
