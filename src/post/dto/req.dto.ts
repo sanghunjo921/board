@@ -1,7 +1,13 @@
-import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 import { Category } from '../type/post.enum';
 
-export class CreatePostReqDto {
+export class CreateCommon {
   @MaxLength(10)
   @IsString()
   subject: string;
@@ -9,10 +15,21 @@ export class CreatePostReqDto {
   @MaxLength(300)
   content: string;
 
-  @IsEnum(Category)
-  category: Category;
-
   @IsString()
   @IsOptional()
   imagePath?: string;
+
+  @IsNumber()
+  @IsOptional()
+  userId?: number;
+}
+
+export class CreatePostReqDto extends CreateCommon {
+  @IsEnum(Category)
+  category: Category.INQUIRY | Category.QA;
+}
+
+export class CreateAnnouncementDto extends CreateCommon {
+  @IsEnum(Category)
+  category: Category.ANNOUNCEMENT;
 }

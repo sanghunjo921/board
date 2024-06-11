@@ -15,11 +15,13 @@ import { SigninResDto, SignupResDto } from './dto/res.dto';
 import { Request, Response } from 'express';
 import { Role } from 'src/user/type/user.enum';
 import { AuthUser, AuthUserType } from './decorator/auth-user.decorator';
+import { Public } from './decorator/public.decorator';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
   @Post('signup')
   async signup(
     @Body()
@@ -34,6 +36,7 @@ export class AuthController {
     return this.authService.signup(email, password, role, res, req);
   }
 
+  @Public()
   @Post('signin')
   async signin(
     @Body() { email, password }: SigninReqDto,
@@ -48,6 +51,7 @@ export class AuthController {
     @AuthUser() user: AuthUserType,
     @Res({ passthrough: true }) res: Response,
   ) {
+    console.log({ authorization });
     const token = /Bearer\s(.+)/.exec(authorization)?.[1];
     return this.authService.refreshToken(user.id, token, res);
   }
