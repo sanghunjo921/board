@@ -8,7 +8,10 @@ import {
   Patch,
   Post,
   Put,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthUser, AuthUserType } from 'src/auth/decorator/auth-user.decorator';
 import { Roles } from 'src/auth/decorator/role.decorator';
 import { Role } from 'src/user/type/user.enum';
@@ -36,6 +39,15 @@ export class PostController {
       createPostReqDto.userId = user.id;
     }
     return this.postService.createPost(createPostReqDto);
+  }
+
+  @Post(':id/upload')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadImage(
+    @UploadedFile() image: Express.Multer.File,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.postService.uploadImage(image, id);
   }
 
   @Roles(Role.ADMIN)

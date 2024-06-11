@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Comment } from 'src/comment/entity/comment.entity';
+import { S3Service } from 'src/s3/s3.service';
 import { UserService } from 'src/user/user.service';
 import { Repository } from 'typeorm';
 import {
@@ -16,6 +17,7 @@ export class PostService {
   constructor(
     @InjectRepository(Post) private readonly postRepository: Repository<Post>,
     private readonly userService: UserService,
+    private readonly s3Service: S3Service,
   ) {}
 
   async createPost({
@@ -38,6 +40,24 @@ export class PostService {
     this.postRepository.save(newPost);
 
     return newPost;
+  }
+
+  async uploadImage(image: Express.Multer.File, id: number) {
+    const targetPost = await this.findPostById(id);
+
+    const ext = image.originalname.split('.').pop();
+
+    const imageUrl = await this.s3Service.uploadImageToS3(
+      `${id}.${ext}`,
+      image,
+      ext,
+    );
+
+    targetPost.imagePath = imageUrl;
+
+    await this.postRepository.save(targetPost);
+
+    return { imageUrl };
   }
 
   async updateCommentByPost(postId: number, comment: Comment) {
