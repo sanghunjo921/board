@@ -21,3 +21,10 @@ export class CreateCommentReqDto {
   @IsOptional()
   postId?: number;
 }
+
+export class UpdateCommentDto {
+  @MaxLength(30)
+  @IsString()
+  @IsOptional()
+  content?: string;
+}

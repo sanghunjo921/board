@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsString,
   MaxLength,
+  NotEquals,
 } from 'class-validator';
 import { Category } from '../type/post.enum';
 
@@ -26,10 +27,27 @@ export class CreateCommon {
 
 export class CreatePostReqDto extends CreateCommon {
   @IsEnum(Category)
-  category: Category.INQUIRY | Category.QA;
+  @NotEquals(Category.ANNOUNCEMENT)
+  category: Category;
 }
 
 export class CreateAnnouncementDto extends CreateCommon {
   @IsEnum(Category)
-  category: Category.ANNOUNCEMENT;
+  @NotEquals(Category.INQUIRY || Category.QA)
+  category: Category;
+}
+
+export class UpdatePostReqDto {
+  @MaxLength(10)
+  @IsString()
+  @IsOptional()
+  subject?: string;
+
+  @MaxLength(300)
+  @IsOptional()
+  content?: string;
+
+  @IsString()
+  @IsOptional()
+  imagePath?: string;
 }
