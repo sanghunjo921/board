@@ -47,7 +47,7 @@ export class AuthService {
 
       const refreshToken = queryRunner.manager.create(RefreshToken, {
         token: refresh,
-        user: { id: newUser.id },
+        user: { id: newUser.id, role },
       });
 
       await queryRunner.manager.save(refreshToken);
