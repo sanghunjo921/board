@@ -113,7 +113,7 @@ export class AuthService {
       return {
         userId,
         access,
-        refresh,
+        refresh: newRefresh,
       };
     } catch (error) {
       throw error;

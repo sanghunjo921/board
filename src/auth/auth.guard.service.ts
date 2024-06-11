@@ -62,7 +62,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
       return this.userService.checkAdminRole(userId);
     }
-
+    console.log(1);
     return super.canActivate(context);
   }
 }

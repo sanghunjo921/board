@@ -19,7 +19,7 @@ import { JwtAuthGuard } from './auth.guard.service';
       useFactory: async (configService: ConfigService) => ({
         global: true,
         secret: configService.get('jwt.secret'),
-        signOptions: { expiresIn: '10m' },
+        signOptions: { expiresIn: '60m' },
       }),
     }),
     TypeOrmModule.forFeature([RefreshToken, User]),

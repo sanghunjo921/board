@@ -20,6 +20,14 @@ export class UserService {
     }
   }
 
+  async findUserById(id: number): Promise<User> {
+    try {
+      return this.userRepository.findOne({ where: { id } });
+    } catch (error) {
+      throw new Error('Error occured while finding an user');
+    }
+  }
+
   async createUser({
     email,
     password,
