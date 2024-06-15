@@ -96,18 +96,27 @@ export class PostService {
   }
 
   async findPostById(id: number): Promise<Post> {
-    try {
-      await this.postRepository.increment({ id }, 'clickCount', 1);
+    return await this.postRepository.manager.transaction(
+      async (transactionalEntityManager) => {
+        await transactionalEntityManager.increment(
+          Post,
+          { id },
+          'clickCount',
+          1,
+        );
 
-      const post = await this.postRepository.findOne({
-        where: { id, isDeleted: 'N' },
-        relations: ['comments', 'user'],
-      });
+        const post = await transactionalEntityManager.findOne(Post, {
+          where: { id, isDeleted: 'N' },
+          relations: ['comments', 'user'],
+        });
 
-      return post;
-    } catch (error) {
-      throw error;
-    }
+        if (!post) {
+          throw new Error(`Post with id ${id} not found`);
+        }
+
+        return post;
+      },
+    );
   }
 
   async getPostsByDate(): Promise<Post[]> {
