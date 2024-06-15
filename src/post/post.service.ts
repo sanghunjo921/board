@@ -111,14 +111,13 @@ export class PostService {
   }
 
   async getPostsByDate(): Promise<Post[]> {
-    // const targetPosts = await this.postRepository.find({
-    //   order: { createdAt: 'DESC' },
-    // });
+    const targetPosts = await this.postRepository.find({
+      order: {
+        createdAt: 'DESC',
+      },
+    });
 
-    // const targetPosts =
-
-    // return targetPosts;
-    return;
+    return targetPosts;
   }
 
   async getPostsByPopularity(
@@ -156,13 +155,13 @@ export class PostService {
       where.subject = subject;
     }
 
-    if (targetUser) {
-      where.user = targetUser;
-    }
-
     targetPosts = await this.postRepository.find({
       where,
       relations: ['user'],
+    });
+
+    targetPosts = targetPosts.filter((post) => {
+      return targetUser ? post.user.id === targetUser.id : true;
     });
 
     return targetPosts;

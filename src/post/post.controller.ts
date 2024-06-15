@@ -7,7 +7,6 @@ import {
   ParseIntPipe,
   Patch,
   Post,
-  Put,
   Query,
   UploadedFile,
   UseInterceptors,
@@ -25,7 +24,6 @@ import {
 import { CreatePostResDto } from './dto/res.dto';
 import { Post as PostEntity } from './entity/post.entity';
 import { PostService } from './post.service';
-import { Category } from './type/post.enum';
 
 @Controller('post')
 export class PostController {
@@ -66,16 +64,6 @@ export class PostController {
     return this.postService.createPost(createannouncementDto);
   }
 
-  @Get()
-  findAllPosts(): Promise<PostEntity[]> {
-    return this.postService.findAllPosts();
-  }
-
-  @Get(':id')
-  findPostByid(@Param('id', ParseIntPipe) id: number): Promise<PostEntity> {
-    return this.postService.findPostById(id);
-  }
-
   @Get('filter')
   findFilteredPosts(
     @Query() filterData: FilteredPostReqDto,
@@ -94,6 +82,16 @@ export class PostController {
     @Query('dateRange') dateRange: 'all' | 'year' | 'month' | 'week',
   ): Promise<PostEntity[]> {
     return this.postService.getPostsByPopularity(dateRange);
+  }
+
+  @Get(':id')
+  findPostByid(@Param('id', ParseIntPipe) id: number): Promise<PostEntity> {
+    return this.postService.findPostById(id);
+  }
+
+  @Get()
+  findAllPosts(): Promise<PostEntity[]> {
+    return this.postService.findAllPosts();
   }
 
   @Patch(':id')

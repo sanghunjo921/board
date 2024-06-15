@@ -35,14 +35,11 @@ export class Post {
 
   @CreateDateColumn({
     name: 'created_at',
-    // transformer: {
-    //   from: (value: string) => new Date(value),
-    //   to: (value: Date) => value.toISOString().slice(0, 10).replaceAll('-', ''),
-    // },
+    type: 'timestamp',
   })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
   updatedAt: Date;
 
   @Column({ default: 'N' })
