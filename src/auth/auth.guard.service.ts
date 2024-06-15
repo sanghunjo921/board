@@ -24,9 +24,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   ) {
     super();
   }
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getClass(),
       context.getHandler(),
@@ -38,9 +36,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
     const http = context?.switchToHttp();
 
-    const { url, headers } = http.getRequest<Request>();
+    const request = http.getRequest<Request>();
 
-    const token = /Bearer\s(.+)/.exec(headers.authorization)?.[1];
+    const token = /Bearer\s(.+)/.exec(request.headers.authorization)?.[1];
 
     if (!token) {
       throw new UnauthorizedException('no token');
@@ -48,7 +46,10 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
     const decoded = this.jwtService.decode(token);
 
-    if (!url.includes('refresh') && decoded.type === TokenType.REFRESH) {
+    if (
+      !request.url.includes('refresh') &&
+      decoded.type === TokenType.REFRESH
+    ) {
       throw new UnauthorizedException('refresh error');
     }
 
@@ -57,12 +58,20 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       context.getHandler(),
     ]);
 
+    const user = await this.userService.findUserById(decoded.sub);
+    request['user'] = user;
+
+    if (!user) {
+      return false;
+    }
+
     if (roles && roles.includes(Role.ADMIN)) {
       const userId = decoded.sub;
-
       return this.userService.checkAdminRole(userId);
     }
     console.log(1);
-    return super.canActivate(context);
+    return true;
+
+    // return super.canActivate(context);
   }
 }

@@ -33,7 +33,13 @@ export class Post {
   @Column({ default: 0 })
   clickCount?: number;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({
+    name: 'created_at',
+    // transformer: {
+    //   from: (value: string) => new Date(value),
+    //   to: (value: Date) => value.toISOString().slice(0, 10).replaceAll('-', ''),
+    // },
+  })
   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })

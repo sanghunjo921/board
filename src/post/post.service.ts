@@ -1,10 +1,23 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  forwardRef,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { CommentService } from 'src/comment/comment.service';
 import { Comment } from 'src/comment/entity/comment.entity';
 import { S3Service } from 'src/s3/s3.service';
 import { User } from 'src/user/entity/user.entity';
 import { UserService } from 'src/user/user.service';
-import { FindOptionsWhere, MoreThan, Repository } from 'typeorm';
+import {
+  DataSource,
+  FindOptionsWhere,
+  getConnection,
+  MoreThan,
+  Repository,
+} from 'typeorm';
 import {
   CreateAnnouncementDto,
   CreatePostReqDto,
@@ -19,6 +32,8 @@ export class PostService {
     @InjectRepository(Post) private readonly postRepository: Repository<Post>,
     private readonly userService: UserService,
     private readonly s3Service: S3Service,
+    @Inject(forwardRef(() => CommentService))
+    private readonly commentService: CommentService,
   ) {}
 
   async createPost({
@@ -82,11 +97,12 @@ export class PostService {
 
   async findPostById(id: number): Promise<Post> {
     try {
+      await this.postRepository.increment({ id }, 'clickCount', 1);
+
       const post = await this.postRepository.findOne({
         where: { id, isDeleted: 'N' },
         relations: ['comments', 'user'],
       });
-      console.log(post.comments);
 
       return post;
     } catch (error) {
@@ -95,10 +111,14 @@ export class PostService {
   }
 
   async getPostsByDate(): Promise<Post[]> {
-    const targetPosts = await this.postRepository.find({
-      order: { createdAt: 'DESC' },
-    });
-    return targetPosts;
+    // const targetPosts = await this.postRepository.find({
+    //   order: { createdAt: 'DESC' },
+    // });
+
+    // const targetPosts =
+
+    // return targetPosts;
+    return;
   }
 
   async getPostsByPopularity(
@@ -169,12 +189,12 @@ export class PostService {
         throw new Error('Post not found or already deleted');
       }
       targetPost.isDeleted = 'Y';
+
+      const result = await this.commentService.deleteCommentsByPostId(id);
+      console.log({ result });
+
       await this.postRepository.save(targetPost);
 
-      if (targetPost.comments && targetPost.comments.length > 0) {
-        const commentIds = targetPost.comments.map((comment) => comment.id);
-        // await this.commentService;
-      }
       return targetPost;
     } catch (error) {
       throw error;

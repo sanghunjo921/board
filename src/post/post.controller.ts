@@ -59,6 +59,7 @@ export class PostController {
     createannouncementDto: CreateAnnouncementDto,
     @AuthUser() user: AuthUserType,
   ): Promise<CreatePostResDto> {
+    console.log({ user });
     if (user.id) {
       createannouncementDto.userId = user.id;
     }
@@ -103,7 +104,7 @@ export class PostController {
     return this.postService.updatePost(id, updatePostReqDto);
   }
 
-  @Put(':id')
+  @Delete(':id')
   deletePost(@Param('id', ParseIntPipe) id: number): Promise<PostEntity> {
     return this.postService.deletePost(id);
   }
