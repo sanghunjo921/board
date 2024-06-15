@@ -121,20 +121,24 @@ export class PostService {
   }
 
   async getPostsByPopularity(
-    dateRange: 'all' | 'year' | 'month' | 'week',
+    dateRange: 'year' | 'month' | 'week',
   ): Promise<Post[]> {
     let where: FindOptionsWhere<Post> = {};
 
-    if (dateRange !== 'all') {
+    console.log(dateRange);
+
+    if (dateRange) {
       const startDate = this.calculateStartDate(dateRange);
+
       where = {
         ...where,
         createdAt: MoreThan(startDate),
       };
+
+      console.log({ startDate });
     }
 
     const targetPosts = await this.postRepository.find({
-      where,
       order: { clickCount: 'DESC' },
     });
 
@@ -204,28 +208,31 @@ export class PostService {
     const currentDate = new Date();
     let startDate: Date;
 
-    switch (dateRange) {
-      case 'year':
+    switch (true) {
+      case dateRange === 'year':
         startDate = new Date(
           currentDate.getFullYear() - 1,
           currentDate.getMonth(),
           currentDate.getDate(),
         );
         break;
-      case 'month':
+      case dateRange === 'month':
         startDate = new Date(
           currentDate.getFullYear(),
           currentDate.getMonth() - 1,
           currentDate.getDate(),
         );
         break;
-      case 'week':
+      case dateRange === 'week':
         startDate = new Date(
           currentDate.getFullYear(),
           currentDate.getMonth(),
           currentDate.getDate() - 7,
         );
         break;
+      default:
+        console.log('unknown', dateRange);
+        startDate = currentDate;
     }
 
     return startDate;
