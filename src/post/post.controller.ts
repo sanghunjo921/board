@@ -79,9 +79,9 @@ export class PostController {
 
   @Get('popular')
   getPostsByPopularity(
-    @Query('dateRange') dateRange: 'all' | 'year' | 'month' | 'week',
+    @Query() queryParams: { dateRange: 'year' | 'month' | 'week' },
   ): Promise<PostEntity[]> {
-    return this.postService.getPostsByPopularity(dateRange);
+    return this.postService.getPostsByPopularity(queryParams.dateRange);
   }
 
   @Get(':id')
