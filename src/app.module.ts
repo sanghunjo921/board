@@ -34,6 +34,9 @@ import s3Config from './config/s3.config';
         typeOrmModuleOptions = Object.assign(typeOrmModuleOptions, {
           synchronize: true,
           logging: true,
+          extra: {
+            timestamps: true,
+          },
         });
         return typeOrmModuleOptions;
       },
