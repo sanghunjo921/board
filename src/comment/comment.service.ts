@@ -1,4 +1,10 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  forwardRef,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Post } from 'src/post/entity/post.entity';
 import { PostService } from 'src/post/post.service';
@@ -15,6 +21,7 @@ export class CommentService {
     private readonly commentRepository: Repository<Comment>,
 
     private readonly userService: UserService,
+    @Inject(forwardRef(() => PostService))
     private readonly postService: PostService,
   ) {}
 
@@ -86,6 +93,25 @@ export class CommentService {
       }
 
       return { ...targetComment, ...updateDate };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async deleteCommentsByPostId(postid: number): Promise<any> {
+    try {
+      const targetPost = await this.postService.findPostById(postid);
+
+      console.log({ targetPost });
+
+      return this.commentRepository.update(
+        {
+          post: targetPost,
+        },
+        {
+          isDeleted: 'Y',
+        },
+      );
     } catch (error) {
       throw error;
     }
