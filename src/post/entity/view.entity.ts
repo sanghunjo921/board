@@ -1,5 +1,3 @@
-import { Comment } from 'src/comment/entity/comment.entity';
-import { User } from 'src/user/entity/user.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -7,28 +5,13 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
-  OneToMany,
-  JoinColumn,
-  JoinTable,
 } from 'typeorm';
-import { Category } from '../type/post.enum';
+import { Post } from './post.entity';
 
 @Entity()
-export class Post {
+export class ViewCounts {
   @PrimaryGeneratedColumn()
   id: number;
-
-  @Column()
-  subject: string;
-
-  @Column()
-  content: string;
-
-  @Column({ type: 'enum', enum: Category })
-  category: Category;
-
-  @Column({ nullable: true })
-  imagePath?: string;
 
   @Column({ default: 0 })
   clickCount?: number;
@@ -45,9 +28,6 @@ export class Post {
   @Column({ default: 'N' })
   isDeleted: string;
 
-  @ManyToOne(() => User, (user) => user.comments)
-  user: User;
-
-  @OneToMany(() => Comment, (comment) => comment.post)
-  comments: Comment[];
+  @ManyToOne(() => Post, (post) => post.viewCounts)
+  post: Post;
 }

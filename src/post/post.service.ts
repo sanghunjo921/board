@@ -25,6 +25,7 @@ import {
 } from './dto/req.dto';
 import { CreatePostResDto } from './dto/res.dto';
 import { Post } from './entity/post.entity';
+import { ViewCounts } from './entity/view.entity';
 
 @Injectable()
 export class PostService {
@@ -34,6 +35,8 @@ export class PostService {
     private readonly s3Service: S3Service,
     @Inject(forwardRef(() => CommentService))
     private readonly commentService: CommentService,
+    @InjectRepository(ViewCounts)
+    private readonly viewRepository: Repository<ViewCounts>,
   ) {}
 
   async createPost({

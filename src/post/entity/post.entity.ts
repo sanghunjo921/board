@@ -12,6 +12,7 @@ import {
   JoinTable,
 } from 'typeorm';
 import { Category } from '../type/post.enum';
+import { ViewCounts } from './view.entity';
 
 @Entity()
 export class Post {
@@ -50,4 +51,7 @@ export class Post {
 
   @OneToMany(() => Comment, (comment) => comment.post)
   comments: Comment[];
+
+  @OneToMany(() => ViewCounts, (viewCounts) => viewCounts.post)
+  viewCounts: ViewCounts[];
 }

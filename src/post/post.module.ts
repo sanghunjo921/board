@@ -6,10 +6,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from 'src/user/user.module';
 import { S3Module } from 'src/s3/s3.module';
 import { CommentModule } from 'src/comment/comment.module';
+import { ViewCounts } from './entity/view.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Post]),
+    TypeOrmModule.forFeature([Post, ViewCounts]),
     UserModule,
     S3Module,
     forwardRef(() => CommentModule),
