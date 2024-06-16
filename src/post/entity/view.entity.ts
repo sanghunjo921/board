@@ -14,16 +14,10 @@ export class ViewCounts {
   id: number;
 
   @Column({ default: 0 })
-  clickCount?: number;
+  clickCount: number;
 
-  @CreateDateColumn({
-    name: 'created_at',
-    type: 'timestamp',
-  })
-  createdAt: Date;
-
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
-  updatedAt: Date;
+  @Column()
+  viewDate: Date;
 
   @Column({ default: 'N' })
   isDeleted: string;

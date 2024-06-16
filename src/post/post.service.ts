@@ -99,28 +99,64 @@ export class PostService {
   }
 
   async findPostById(id: number): Promise<Post> {
-    return await this.postRepository.manager.transaction(
-      async (transactionalEntityManager) => {
-        await transactionalEntityManager.increment(
-          Post,
-          { id },
-          'clickCount',
-          1,
-        );
-
-        const post = await transactionalEntityManager.findOne(Post, {
-          where: { id, isDeleted: 'N' },
-          relations: ['comments', 'user'],
-        });
-
-        if (!post) {
-          throw new Error(`Post with id ${id} not found`);
-        }
-
-        return post;
+    const post = await this.postRepository.findOne({
+      where: {
+        id,
       },
-    );
+      relations: ['viewCounts'],
+    });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tmrw = new Date(today);
+    tmrw.setDate(today.getDate() + 1);
+
+    let view = await this.viewRepository.findOne({
+      where: {
+        post: post,
+        viewDate: today,
+      },
+    });
+
+    if (!view) {
+      view = this.viewRepository.create({
+        post: post,
+        viewDate: today,
+        clickCount: 1,
+      });
+    } else {
+      view.clickCount += 1;
+    }
+
+    await this.viewRepository.save(view);
+
+    return post;
   }
+
+  //   async findPostById(id: number): Promise<Post> {
+  //     return await this.postRepository.manager.transaction(
+  //       async (transactionalEntityManager) => {
+  //         await transactionalEntityManager.increment(
+  //           Post,
+  //           { id },
+  //           'clickCount',
+  //           1,
+  //         );
+
+  //         const post = await transactionalEntityManager.findOne(Post, {
+  //           where: { id, isDeleted: 'N' },
+  //           relations: ['comments', 'user'],
+  //         });
+
+  //         if (!post) {
+  //           throw new Error(`Post with id ${id} not found`);
+  //         }
+
+  //         return post;
+  //       },
+  //     );
+  //   }
 
   async getPostsByDate(): Promise<Post[]> {
     const targetPosts = await this.postRepository.find({
