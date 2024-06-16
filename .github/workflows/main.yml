@@ -1,0 +1,20 @@
+name: Build and Deploy to EC2
+
+on:
+  push:
+    branches: ['main']
+
+env:
+  AWS_REGION: ap-northeast-2
+  AWS_S3_BUCKET: board-ec2
+  AWS_CODE_DEPLOY_APPLICATION: board
+  AWS_CODE_DEPLOY_GROUP: production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-lates
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
