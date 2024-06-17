@@ -12,6 +12,7 @@ import { S3Service } from 'src/s3/s3.service';
 import { User } from 'src/user/entity/user.entity';
 import { UserService } from 'src/user/user.service';
 import {
+  Between,
   DataSource,
   FindOptionsWhere,
   getConnection,
@@ -107,22 +108,26 @@ export class PostService {
     });
 
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const startOfWeek = new Date(
+      today.setDate(today.getDate() - today.getDay()),
+    );
+    startOfWeek.setHours(0, 0, 0, 0);
 
-    const tmrw = new Date(today);
-    tmrw.setDate(today.getDate() + 1);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
 
     let view = await this.viewRepository.findOne({
       where: {
         post: post,
-        viewDate: today,
+        viewDate: Between(startOfWeek, endOfWeek),
       },
     });
 
     if (!view) {
       view = this.viewRepository.create({
         post: post,
-        viewDate: today,
+        viewDate: startOfWeek,
         clickCount: 1,
       });
     } else {
