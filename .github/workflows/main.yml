@@ -1,4 +1,4 @@
-name: Build and Deploy to EC2
+name: Build Container Image
 
 on:
   push:
@@ -6,15 +6,40 @@ on:
 
 env:
   AWS_REGION: ap-northeast-2
-  AWS_S3_BUCKET: board-ec2
-  AWS_CODE_DEPLOY_APPLICATION: board
-  AWS_CODE_DEPLOY_GROUP: production
+  ECR_REPOSITORY: postgres
 
 jobs:
-  deploy:
-    runs-on: ubuntu-lates
-    permissions:
-      contents: read
-      packages: write
+  build-and-push:
+    name: Build container image and push it to ECR.
+    runs-on: [ubuntu-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          GIT_SHA: ${{ github.sha }}
+          LATEST_TAG: 'latest'
+        run: |
+          # Build a docker container and
+          # push it to ECR so that it can
+          # be deployed to ECS.
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$GIT_SHA .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$GIT_SHA $ECR_REGISTRY/$ECR_REPOSITORY:$GIT_SHA
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$GIT_SHA $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG
+
+          # ECR에 이미지 푸시
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$GIT_SHA
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG
