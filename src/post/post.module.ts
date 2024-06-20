@@ -7,12 +7,14 @@ import { UserModule } from 'src/user/user.module';
 import { S3Module } from 'src/s3/s3.module';
 import { CommentModule } from 'src/comment/comment.module';
 import { ViewCounts } from './entity/view.entity';
+import { RedisModule } from '@liaoliaots/nestjs-redis';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Post, ViewCounts]),
     UserModule,
     S3Module,
+    RedisModule,
     forwardRef(() => CommentModule),
   ],
   controllers: [PostController],

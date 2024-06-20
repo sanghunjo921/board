@@ -13,6 +13,8 @@ services:
       database:
         condition: service_healthy
         restart: true
+      redis:
+        condition: service_started
   database:
     image: mysql:latest
     environment:
@@ -43,7 +45,7 @@ services:
   redis:
     image: redis:7.2
     restart: always
-    command: redis-server
+    command: ['redis-server', '--port', '6380']
     ports:
       - '6380:6380'
     volumes:

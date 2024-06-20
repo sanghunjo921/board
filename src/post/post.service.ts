@@ -1,3 +1,4 @@
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import {
   forwardRef,
   HttpException,
@@ -6,6 +7,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Redis } from 'ioredis';
 import { CommentService } from 'src/comment/comment.service';
 import { Comment } from 'src/comment/entity/comment.entity';
 import { S3Service } from 'src/s3/s3.service';
@@ -38,6 +40,8 @@ export class PostService {
     private readonly commentService: CommentService,
     @InjectRepository(ViewCounts)
     private readonly viewRepository: Repository<ViewCounts>,
+    @InjectRedis()
+    private readonly redisService: Redis,
   ) {}
 
   async createPost({
@@ -99,69 +103,83 @@ export class PostService {
     }
   }
 
-  async findPostById(id: number): Promise<Post> {
-    const post = await this.postRepository.findOne({
-      where: {
-        id,
-      },
-      relations: ['viewCounts'],
-    });
-
-    const today = new Date();
-    const startOfWeek = new Date(
-      today.setDate(today.getDate() - today.getDay()),
-    );
-    startOfWeek.setHours(0, 0, 0, 0);
-
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999);
-
-    let view = await this.viewRepository.findOne({
-      where: {
-        post: post,
-        viewDate: Between(startOfWeek, endOfWeek),
-      },
-    });
-
-    if (!view) {
-      view = this.viewRepository.create({
-        post: post,
-        viewDate: startOfWeek,
-        clickCount: 1,
-      });
-    } else {
-      view.clickCount += 1;
-    }
-
-    await this.viewRepository.save(view);
-
-    return post;
-  }
-
   //   async findPostById(id: number): Promise<Post> {
-  //     return await this.postRepository.manager.transaction(
-  //       async (transactionalEntityManager) => {
-  //         await transactionalEntityManager.increment(
-  //           Post,
-  //           { id },
-  //           'clickCount',
-  //           1,
-  //         );
-
-  //         const post = await transactionalEntityManager.findOne(Post, {
-  //           where: { id, isDeleted: 'N' },
-  //           relations: ['comments', 'user'],
-  //         });
-
-  //         if (!post) {
-  //           throw new Error(`Post with id ${id} not found`);
-  //         }
-
-  //         return post;
+  //     const post = await this.postRepository.findOne({
+  //       where: {
+  //         id,
   //       },
+  //       relations: ['viewCounts'],
+  //     });
+
+  //     const today = new Date();
+  //     const startOfWeek = new Date(
+  //       today.setDate(today.getDate() - today.getDay()),
   //     );
+  //     startOfWeek.setHours(0, 0, 0, 0);
+
+  //     const endOfWeek = new Date(startOfWeek);
+  //     endOfWeek.setDate(startOfWeek.getDate() + 6);
+  //     endOfWeek.setHours(23, 59, 59, 999);
+
+  //     let view = await this.viewRepository.findOne({
+  //       where: {
+  //         post: post,
+  //         viewDate: Between(startOfWeek, endOfWeek),
+  //       },
+  //     });
+
+  //     if (!view) {
+  //       view = this.viewRepository.create({
+  //         post: post,
+  //         viewDate: startOfWeek,
+  //         clickCount: 1,
+  //       });
+  //     } else {
+  //       view.clickCount += 1;
+  //     }
+
+  //     await this.viewRepository.save(view);
+
+  //     return post;
   //   }
+
+  async findPostById(id: number): Promise<Post> {
+    return await this.postRepository.manager.transaction(
+      async (transactionalEntityManager) => {
+        await transactionalEntityManager.increment(
+          Post,
+          { id },
+          'clickCount',
+          1,
+        );
+
+        const post = await transactionalEntityManager.findOne(Post, {
+          where: { id, isDeleted: 'N' },
+          relations: ['comments', 'user'],
+        });
+
+        if (!post) {
+          throw new Error(`Post with id ${id} not found`);
+        }
+
+        const keys = {
+          year: `post:${id}:yearlyViews`,
+          month: `post:${id}:monthlyViews`,
+          week: `post:${id}:weeklyViews`,
+          day: `post:${id}:dailyViews:`,
+        };
+
+        let [prevYear, prevMonth, prevWeek, prevDay] = await this.redisService
+          .mget(keys.year, keys.month, keys.week, keys.day)
+          .then((results) =>
+            results.map((item) => (item ? JSON.parse(item) : null)),
+          );
+        prevYear = prevYear - prevDay;
+
+        return post;
+      },
+    );
+  }
 
   async getPostsByDate(): Promise<Post[]> {
     const targetPosts = await this.postRepository.find({
