@@ -40,3 +40,14 @@ services:
       timeout: 30s
       retries: 5
       start_period: 30s
+  redis:
+    image: redis:7.2
+    restart: always
+    command: redis-server
+    ports:
+      - '6380:6380'
+    volumes:
+      - ./data/redis:/var/lib/redis
+      - ./data/redis-config:/usr/local/etc/redis
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']

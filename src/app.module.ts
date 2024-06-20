@@ -9,6 +9,8 @@ import { S3Module } from './s3/s3.module';
 import dbConfig from './config/mysql.config';
 import jwtConfig from './config/jwt.config';
 import s3Config from './config/s3.config';
+import { RedisModule, RedisModuleOptions } from '@liaoliaots/nestjs-redis';
+import redisConfig from './config/redis.config';
 
 @Module({
   imports: [
@@ -16,7 +18,7 @@ import s3Config from './config/s3.config';
       envFilePath: ['.env'],
       isGlobal: true,
       cache: true,
-      load: [dbConfig, jwtConfig, s3Config],
+      load: [dbConfig, jwtConfig, s3Config, redisConfig],
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -39,6 +41,22 @@ import s3Config from './config/s3.config';
           },
         });
         return typeOrmModuleOptions;
+      },
+    }),
+    RedisModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (
+        configService: ConfigService,
+      ): Promise<RedisModuleOptions> => {
+        let redisModuleOptions: RedisModuleOptions = {
+          config: {
+            host: configService.get('redis.host'),
+            port: configService.get('redis.port'),
+          },
+        };
+
+        return redisModuleOptions;
       },
     }),
     AuthModule,
