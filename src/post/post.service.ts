@@ -53,15 +53,18 @@ export class PostService {
   }: CreatePostReqDto | CreateAnnouncementDto): Promise<CreatePostResDto> {
     console.log({ userId });
     const user = await this.userService.findUserById(Number(userId));
+    const view = this.viewRepository.create();
+    await this.viewRepository.save(view);
     const newPost = this.postRepository.create({
       subject,
       content,
       category,
       imagePath,
       user,
+      viewCount: view,
     });
 
-    this.postRepository.save(newPost);
+    await this.postRepository.save(newPost);
 
     return newPost;
   }
@@ -146,39 +149,68 @@ export class PostService {
   async findPostById(id: number): Promise<Post> {
     return await this.postRepository.manager.transaction(
       async (transactionalEntityManager) => {
-        await transactionalEntityManager.increment(
-          Post,
-          { id },
-          'clickCount',
-          1,
-        );
+        try {
+          const post = await transactionalEntityManager.findOne(Post, {
+            where: { id, isDeleted: 'N' },
+            relations: ['comments', 'user', 'viewCount'],
+          });
 
-        const post = await transactionalEntityManager.findOne(Post, {
-          where: { id, isDeleted: 'N' },
-          relations: ['comments', 'user'],
-        });
-
-        if (!post) {
-          throw new Error(`Post with id ${id} not found`);
-        }
-
-        const keys = {
-          year: `post:${id}:yearlyViews`,
-          month: `post:${id}:monthlyViews`,
-          week: `post:${id}:weeklyViews`,
-          day: `post:${id}:dailyViews:`,
-        };
-
-        let [prevYear, prevMonth, prevWeek, prevDay] = await this.redisService
-          .mget(keys.year, keys.month, keys.week, keys.day)
-          .then((results) =>
-            results.map((item) => (item ? JSON.parse(item) : null)),
+          const viewCount = await transactionalEntityManager.findOne(
+            ViewCounts,
+            {
+              where: {
+                post: {
+                  id: post.id,
+                },
+              },
+            },
           );
-        prevYear = prevYear - prevDay;
 
-        return post;
+          viewCount.clickCount += 1;
+
+          if (!post) {
+            throw new Error(`Post with id ${id} not found`);
+          }
+
+          this.updateViewCountsOnRedis(id);
+
+          await transactionalEntityManager.save(Post, post);
+          await transactionalEntityManager.save(ViewCounts, viewCount);
+
+          return post;
+        } catch (err) {}
       },
     );
+  }
+
+  async updateViewCountsOnRedis(postId: number) {
+    const yrKey = `post:${postId}:yr`;
+    const monthKey = `post:${postId}:month`;
+    const weekKey = `post:${postId}:week`;
+    const [yr, month, week] = await this.redisService
+      .mget(yrKey, monthKey, weekKey)
+      .then((results) => results.map((item) => (item ? Number(item) : 0)));
+
+    await this.redisService.mset(
+      yrKey,
+      yr + 1,
+      monthKey,
+      month + 1,
+      weekKey,
+      week + 1,
+    );
+  }
+
+  async getPostsyearlyPopularity(): Promise<Post[]> {
+    const posts = this.postRepository.find();
+
+    return;
+  }
+  async getPostsweeklyPopularity(): Promise<Post[]> {
+    return;
+  }
+  async getPostsmonthyPopularity(): Promise<Post[]> {
+    return;
   }
 
   async getPostsByDate(): Promise<Post[]> {
@@ -186,31 +218,6 @@ export class PostService {
       order: {
         createdAt: 'DESC',
       },
-    });
-
-    return targetPosts;
-  }
-
-  async getPostsByPopularity(
-    dateRange: 'year' | 'month' | 'week',
-  ): Promise<Post[]> {
-    let where: FindOptionsWhere<Post> = {};
-
-    console.log(dateRange);
-
-    if (dateRange) {
-      const startDate = this.calculateStartDate(dateRange);
-
-      where = {
-        ...where,
-        createdAt: MoreThan(startDate),
-      };
-
-      console.log({ startDate });
-    }
-
-    const targetPosts = await this.postRepository.find({
-      order: { clickCount: 'DESC' },
     });
 
     return targetPosts;
@@ -273,39 +280,5 @@ export class PostService {
     } catch (error) {
       throw error;
     }
-  }
-
-  private calculateStartDate(dateRange: 'year' | 'month' | 'week'): Date {
-    const currentDate = new Date();
-    let startDate: Date;
-
-    switch (true) {
-      case dateRange === 'year':
-        startDate = new Date(
-          currentDate.getFullYear() - 1,
-          currentDate.getMonth(),
-          currentDate.getDate(),
-        );
-        break;
-      case dateRange === 'month':
-        startDate = new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth() - 1,
-          currentDate.getDate(),
-        );
-        break;
-      case dateRange === 'week':
-        startDate = new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth(),
-          currentDate.getDate() - 7,
-        );
-        break;
-      default:
-        console.log('unknown', dateRange);
-        startDate = currentDate;
-    }
-
-    return startDate;
   }
 }
