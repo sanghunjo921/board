@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  OneToOne,
 } from 'typeorm';
 import { Post } from './post.entity';
 
@@ -16,12 +17,18 @@ export class ViewCounts {
   @Column({ default: 0 })
   clickCount: number;
 
-  @Column()
-  viewDate: Date;
+  @CreateDateColumn({
+    name: 'created_at',
+    type: 'timestamp',
+  })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
+  updatedAt: Date;
 
   @Column({ default: 'N' })
   isDeleted: string;
 
-  @ManyToOne(() => Post, (post) => post.viewCounts)
+  @OneToOne(() => Post, (post) => post.viewCount)
   post: Post;
 }
