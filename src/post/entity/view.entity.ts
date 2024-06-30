@@ -17,6 +17,9 @@ export class ViewCounts {
   @Column({ default: 0 })
   clickCount: number;
 
+  @Column({ type: 'timestamp' })
+  updatedClickCountDate: Date;
+
   @CreateDateColumn({
     name: 'created_at',
     type: 'timestamp',

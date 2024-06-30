@@ -13,14 +13,7 @@ import { Comment } from 'src/comment/entity/comment.entity';
 import { S3Service } from 'src/s3/s3.service';
 import { User } from 'src/user/entity/user.entity';
 import { UserService } from 'src/user/user.service';
-import {
-  Between,
-  DataSource,
-  FindOptionsWhere,
-  getConnection,
-  MoreThan,
-  Repository,
-} from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import {
   CreateAnnouncementDto,
   CreatePostReqDto,
@@ -146,6 +139,13 @@ export class PostService {
   //     return post;
   //   }
 
+  async findOne(id: number): Promise<Post> {
+    return this.postRepository.findOne({
+      where: { id },
+      relations: ['comments'],
+    });
+  }
+
   async findPostById(id: number): Promise<Post> {
     return await this.postRepository.manager.transaction(
       async (transactionalEntityManager) => {
@@ -167,6 +167,7 @@ export class PostService {
           );
 
           viewCount.clickCount += 1;
+          viewCount.updatedClickCountDate = new Date();
 
           if (!post) {
             throw new Error(`Post with id ${id} not found`);
