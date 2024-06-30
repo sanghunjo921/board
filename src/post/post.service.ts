@@ -161,25 +161,27 @@ export class PostService {
             relations: ['comments', 'user', 'viewCount'],
           });
 
-          await transactionalEntityManager.update(
-            ViewCounts,
-            { post: { id: post.id } },
-            {
-              clickCount: () => 'clickCount + 1',
-              updatedClickCountDate: new Date(),
-            },
-          );
-
           if (!post) {
             throw new Error(`Post with id ${id} not found`);
           }
+
+          await transactionalEntityManager.query(
+            `
+          UPDATE view_counts
+          SET click_count = click_count + 1, updated_click_count_date = ?
+          WHERE post_id = ?
+        `,
+            [new Date(), post.id],
+          );
 
           this.updateViewCountsOnRedis(id);
 
           await transactionalEntityManager.save(Post, post);
 
           return post;
-        } catch (err) {}
+        } catch (err) {
+          throw new Error(`failed to find post with id ${id}: ${err.message}`);
+        }
       },
     );
   }
