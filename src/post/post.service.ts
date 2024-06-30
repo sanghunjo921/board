@@ -56,6 +56,12 @@ export class PostService {
       user,
       viewCount: view,
     });
+    const postId = newPost.id;
+    const yrKey = `post:${postId}:yr`;
+    const monthKey = `post:${postId}:month`;
+    const weekKey = `post:${postId}:week`;
+
+    await this.redisService.mset(yrKey, 0, monthKey, 0, weekKey, 0);
 
     await this.postRepository.save(newPost);
 
@@ -155,19 +161,14 @@ export class PostService {
             relations: ['comments', 'user', 'viewCount'],
           });
 
-          const viewCount = await transactionalEntityManager.findOne(
+          await transactionalEntityManager.update(
             ViewCounts,
+            { post: { id: post.id } },
             {
-              where: {
-                post: {
-                  id: post.id,
-                },
-              },
+              clickCount: () => 'clickCount + 1',
+              updatedClickCountDate: new Date(),
             },
           );
-
-          viewCount.clickCount += 1;
-          viewCount.updatedClickCountDate = new Date();
 
           if (!post) {
             throw new Error(`Post with id ${id} not found`);
@@ -176,7 +177,6 @@ export class PostService {
           this.updateViewCountsOnRedis(id);
 
           await transactionalEntityManager.save(Post, post);
-          await transactionalEntityManager.save(ViewCounts, viewCount);
 
           return post;
         } catch (err) {}
