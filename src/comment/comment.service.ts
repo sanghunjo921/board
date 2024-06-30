@@ -6,7 +6,6 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Post } from 'src/post/entity/post.entity';
 import { PostService } from 'src/post/post.service';
 import { UserService } from 'src/user/user.service';
 import { Repository } from 'typeorm';
@@ -19,7 +18,6 @@ export class CommentService {
   constructor(
     @InjectRepository(Comment)
     private readonly commentRepository: Repository<Comment>,
-
     private readonly userService: UserService,
     @Inject(forwardRef(() => PostService))
     private readonly postService: PostService,
@@ -50,9 +48,18 @@ export class CommentService {
   }
 
   async getAllCommentsByPost(postId: number): Promise<Comment[]> {
-    const targetPost = await this.postService.findPostById(postId);
+    const targetPost = await this.postService.findOne(postId);
 
-    return targetPost.comments;
+    const comments = targetPost.comments;
+
+    comments.sort((commentA, commentB) => {
+      return (
+        commentA.parent - commentB.parent ||
+        commentA.createdAt.getTime() - commentB.createdAt.getTime()
+      );
+    });
+
+    return comments;
   }
 
   async getCommentByPost(id: number, postId: number): Promise<Comment> {

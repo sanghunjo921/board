@@ -50,7 +50,7 @@ export class Post {
   @ManyToOne(() => User, (user) => user.comments)
   user: User;
 
-  @OneToMany(() => Comment, (comment) => comment.post)
+  @OneToMany(() => Comment, (comment) => comment.post, { eager: true })
   comments: Comment[];
 
   @OneToOne(() => ViewCounts, (viewCounts) => viewCounts.post)

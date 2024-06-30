@@ -10,6 +10,7 @@ import dbConfig from './config/mysql.config';
 import jwtConfig from './config/jwt.config';
 import s3Config from './config/s3.config';
 import { RedisModule, RedisModuleOptions } from '@liaoliaots/nestjs-redis';
+import { CronModule } from './cron/cron.module';
 import redisConfig from './config/redis.config';
 
 @Module({
@@ -64,6 +65,7 @@ import redisConfig from './config/redis.config';
     PostModule,
     CommentModule,
     S3Module,
+    CronModule,
   ],
 })
 export class AppModule {}
