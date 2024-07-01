@@ -204,16 +204,59 @@ export class PostService {
     );
   }
 
-  async getPostsyearlyPopularity(): Promise<Post[]> {
-    const posts = this.postRepository.find();
+  async getPostsyearlyPopularity(postId: number): Promise<Post[]> {
+    const postIds = (await this.postRepository.find()).map((post) => post.id);
 
-    return;
+    const posts: { post: Post; viewCount: number }[] = [];
+
+    for (const id of postIds) {
+      const yrKey = `post:${id}:yr`;
+      const viewCount = await this.redisService.get(yrKey);
+
+      const post = await this.postRepository.findOne({ where: { id } });
+
+      posts.push({ post, viewCount: parseInt(viewCount, 10) });
+    }
+
+    posts.sort((a, b) => b.viewCount - a.viewCount);
+
+    return posts.map((p) => p.post);
   }
   async getPostsweeklyPopularity(): Promise<Post[]> {
-    return;
+    const postIds = (await this.postRepository.find()).map((post) => post.id);
+
+    const posts: { post: Post; viewCount: number }[] = [];
+
+    for (const id of postIds) {
+      const yrKey = `post:${id}:week`;
+      const viewCount = await this.redisService.get(yrKey);
+
+      const post = await this.postRepository.findOne({ where: { id } });
+
+      posts.push({ post, viewCount: parseInt(viewCount, 10) });
+    }
+
+    posts.sort((a, b) => b.viewCount - a.viewCount);
+
+    return posts.map((p) => p.post);
   }
   async getPostsmonthyPopularity(): Promise<Post[]> {
-    return;
+    const postIds = (await this.postRepository.find()).map((post) => post.id);
+
+    const posts: { post: Post; viewCount: number }[] = [];
+
+    for (const id of postIds) {
+      const yrKey = `post:${id}:month`;
+      const viewCount = await this.redisService.get(yrKey);
+
+      const post = await this.postRepository.findOne({ where: { id } });
+
+      posts.push({ post, viewCount: parseInt(viewCount, 10) });
+    }
+
+    posts.sort((a, b) => b.viewCount - a.viewCount);
+
+    return posts.map((p) => p.post);
   }
 
   async getPostsByDate(): Promise<Post[]> {
