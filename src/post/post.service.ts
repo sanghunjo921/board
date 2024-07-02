@@ -105,46 +105,6 @@ export class PostService {
     }
   }
 
-  //   async findPostById(id: number): Promise<Post> {
-  //     const post = await this.postRepository.findOne({
-  //       where: {
-  //         id,
-  //       },
-  //       relations: ['viewCounts'],
-  //     });
-
-  //     const today = new Date();
-  //     const startOfWeek = new Date(
-  //       today.setDate(today.getDate() - today.getDay()),
-  //     );
-  //     startOfWeek.setHours(0, 0, 0, 0);
-
-  //     const endOfWeek = new Date(startOfWeek);
-  //     endOfWeek.setDate(startOfWeek.getDate() + 6);
-  //     endOfWeek.setHours(23, 59, 59, 999);
-
-  //     let view = await this.viewRepository.findOne({
-  //       where: {
-  //         post: post,
-  //         viewDate: Between(startOfWeek, endOfWeek),
-  //       },
-  //     });
-
-  //     if (!view) {
-  //       view = this.viewRepository.create({
-  //         post: post,
-  //         viewDate: startOfWeek,
-  //         clickCount: 1,
-  //       });
-  //     } else {
-  //       view.clickCount += 1;
-  //     }
-
-  //     await this.viewRepository.save(view);
-
-  //     return post;
-  //   }
-
   async findOne(id: number): Promise<Post> {
     return this.postRepository.findOne({
       where: { id },
