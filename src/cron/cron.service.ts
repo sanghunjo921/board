@@ -50,7 +50,22 @@ export class CronService {
               results.map((item) => (item ? Number(item) : 0)),
             );
 
+          const today: Date = new Date();
+
           viewCounts.clickCount = 0;
+
+          const monthFirst = viewCounts.firstCountMonth;
+          const yrFirst = viewCounts.firstCountYr;
+          const weekFirst = viewCounts.firstCountWeek;
+
+          await this.redisService.mset(
+            yrKey,
+            yr - yrFirst,
+            monthKey,
+            month - monthFirst,
+            weekKey,
+            week - weekFirst,
+          );
 
           const diffDay = caculateTimeDifference(
             new Date(viewCounts?.updatedClickCountDate),
