@@ -20,6 +20,15 @@ export class ViewCounts {
   @Column({ type: 'timestamp' })
   updatedClickCountDate: Date;
 
+  @Column({ default: 0 })
+  firstCountYr: number;
+
+  @Column({ default: 0 })
+  firstCountMonth: number;
+
+  @Column({ default: 0 })
+  firstCountWeek: number;
+
   @CreateDateColumn({
     name: 'created_at',
     type: 'timestamp',
