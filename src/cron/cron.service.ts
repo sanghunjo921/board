@@ -52,7 +52,9 @@ export class CronService {
 
           const today: Date = new Date();
 
-          viewCounts.clickCount = 0;
+          if (viewCounts.clickCount > 0) {
+            viewCounts.clickCount = 0;
+          }
 
           const monthFirst = viewCounts.firstCountMonth;
           const yrFirst = viewCounts.firstCountYr;
