@@ -140,4 +140,44 @@ export class CommentService {
       throw error;
     }
   }
+
+  async paginateChildrenComments(
+    commentId: number,
+    page: number,
+    size: number,
+  ): Promise<{ children: Comment[]; totalCount: number; totalPages: number }> {
+    const skip = (page - 1) * size;
+
+    const [children, totalCount] = await this.commentRepository.findAndCount({
+      relations: ['childComments'],
+      skip,
+      take: size,
+    });
+
+    const totalPages = Math.ceil(totalCount / size);
+
+    return { children, totalCount, totalPages };
+  }
+
+  async getCommentByTicket(id: number, ticketId: number): Promise<Comment> {
+    try {
+      const targetPost = await this.postService.findOne(ticketId);
+
+      if (!targetPost) {
+        throw new Error('Post not found or already deleted');
+      }
+
+      const targetComment = targetPost.comments.find(
+        (comment) => comment.id === id && comment.isDeleted === 'N',
+      );
+
+      if (!targetComment) {
+        throw new Error('Comment not found or already deleted');
+      }
+
+      return targetComment;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
