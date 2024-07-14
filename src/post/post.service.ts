@@ -105,11 +105,45 @@ export class PostService {
     }
   }
 
-  async findOne(id: number): Promise<Post> {
-    return this.postRepository.findOne({
-      where: { id },
-      relations: ['comments'],
-    });
+  async findOne(id: number) {
+    await this.postRepository.increment({ id }, 'clickCount', 1);
+
+    const ticket = await this.postRepository.findOneBy({ id });
+
+    const today = new Date();
+
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    // monday 기준
+    const week = caculateTimeDifference();
+    const day = today.getDay();
+
+    const yrKey = `ticket:${id}:yr:${year}`;
+    const monthKey = `ticket:${id}:month:${month}`;
+    const weekKey = `ticket:${id}:week:${week}`;
+    const dayKey = `ticket:${id}:week:${day}`;
+
+    let [yrCounts, monthCounts, weekCounts, dayCounts] = (
+      await this.redisService.mget(yrKey, monthKey, weekKey, dayKey)
+    ).map((item) => +item);
+
+    yrCounts = yrCounts ? yrCounts + 1 : 1;
+    monthCounts = monthCounts ? monthCounts + 1 : 1;
+    weekCounts = weekCounts ? weekCounts + 1 : 1;
+    dayCounts = dayCounts ? dayCounts + 1 : 1;
+
+    await this.redisService.mset(
+      yrKey,
+      yrCounts,
+      monthKey,
+      monthCounts,
+      weekKey,
+      weekCounts,
+      dayKey,
+      dayCounts,
+    );
+
+    return ticket;
   }
 
   async findPostById(id: number): Promise<Post> {
@@ -219,6 +253,39 @@ export class PostService {
     return posts.map((p) => p.post);
   }
 
+  async findDailyPopularTickets() {
+    const tickets = await this.postRepository.find();
+
+    const caching: { [key: number]: number } = {};
+
+    const promises = tickets.map(async (ticket) => {
+      const today = new Date();
+      const day = today.getDay();
+      const dayKey = `ticket:${ticket.id}:yr:${day}`;
+
+      const dayCountsStr = await this.redisService.get(dayKey);
+      let dayCounts: number = 0;
+      if (dayCountsStr) {
+        dayCounts = JSON.parse(dayCountsStr);
+      }
+
+      caching[ticket.id] = dayCounts;
+    });
+
+    await Promise.all(promises);
+
+    const sortedTickets = Object.entries(caching).sort((a, b) => b[1] - a[1]);
+
+    const sortedTicketPromises = sortedTickets.map(async ([idStr]) => {
+      const id = Number(idStr);
+      return await this.postRepository.findOne({ where: { id } });
+    });
+
+    const sortedTicketObjects = await Promise.all(sortedTicketPromises);
+
+    return sortedTicketObjects;
+  }
+
   async getPostsByDate(): Promise<Post[]> {
     const targetPosts = await this.postRepository.find({
       order: {
@@ -288,3 +355,21 @@ export class PostService {
     }
   }
 }
+
+export const caculateTimeDifference = () => {
+  const today = new Date();
+
+  // 올해의 첫 날 (1월 1일)
+  const startOfYear = new Date(today.getFullYear(), 0, 1);
+
+  // 밀리초 단위의 차이 계산
+  const diffTime = today.getTime() - startOfYear.getTime();
+
+  // 밀리초를 일 단위로 변환
+  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+  // 몇 번째 주인지 계산
+  const weekNumber = Math.ceil((diffDays + startOfYear.getDay() + 1) / 7);
+
+  return weekNumber;
+};
